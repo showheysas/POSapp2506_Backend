@@ -8,7 +8,10 @@ class Transaction(Base):
     __tablename__ = 'transaction'
 
     TRD_ID = Column(Integer, primary_key=True, index=True)
-    DATETIME = Column(DateTime, default=datetime.utcnow)
+
+    # 日本時間で記録されるように修正
+    DATETIME = Column(DateTime, default=lambda: datetime.now(timezone(timedelta(hours=9))))
+
     EMP_CD = Column(String(10))
     STORE_CD = Column(String(5))
     POS_NO = Column(String(3))
@@ -16,6 +19,7 @@ class Transaction(Base):
     TTL_AMT_EX_TAX = Column(Integer)
 
     details = relationship("TransactionDetail", back_populates="transaction")
+
 
 
 class TransactionDetail(Base):
