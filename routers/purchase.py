@@ -19,22 +19,24 @@ def create_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
         TTL_AMT_EX_TAX=0
     )
     db.add(transaction)
-    db.flush()
+    db.flush()  # TRD_IDを取得するため
 
     total = 0
     total_ex = 0
     detail_id = 1
 
     for item in data.details:
-        print(f"Received item: {item}")
-        product = db.query(ProductMaster).filter(ProductMaster.CODE == int(item.prd_code)).first()
-        
+        try:
+            code = int(item.prd_code)  # BigIntegerに対応するため明示的にintへ
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid product code format")
+
+        product = db.query(ProductMaster).filter(ProductMaster.CODE == code).first()
+
         if not product:
-            print("Product not found in DB")
-            raise HTTPException(status_code=400, detail="Product not found")
+            raise HTTPException(status_code=400, detail=f"Product not found: {item.prd_code}")
 
         if product.NAME != item.prd_name or product.PRICE != item.prd_price:
-            print(f"Mismatch - DB: {product.NAME}, {product.PRICE} | Input: {item.prd_name}, {item.prd_price}")
             raise HTTPException(status_code=400, detail="Product info mismatch")
 
         for _ in range(item.quantity):
@@ -42,7 +44,7 @@ def create_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
                 TRD_ID=transaction.TRD_ID,
                 DTL_ID=detail_id,
                 PRD_ID=product.PRD_ID,
-                PRD_CODE=item.prd_code,
+                PRD_CODE=code,
                 PRD_NAME=item.prd_name,
                 PRD_PRICE=item.prd_price,
                 TAX_CD=item.tax_cd
@@ -57,5 +59,4 @@ def create_transaction(data: TransactionCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(transaction)
 
-    print("Returning transaction result:", total, total_ex)
     return TransactionResult(success=True, total_amount=total, total_amount_ex_tax=total_ex)

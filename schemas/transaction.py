@@ -3,7 +3,7 @@ from typing import List
 
 # 商品明細（入力専用）
 class TransactionDetailCreate(BaseModel):
-    prd_code: str
+    prd_code: int  # ← 修正
     prd_name: str
     prd_price: int
     tax_cd: str

@@ -1,9 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:ssksh44@127.0.0.1:3306/posapp202506"
+import os
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Supabaseの接続情報（Renderの環境変数から読み込む）
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+
+# PostgreSQL用のエンジン作成（SSL接続が必要）
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"sslmode": "require"}  # Supabaseでは必須
+)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
